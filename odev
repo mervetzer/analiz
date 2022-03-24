@@ -1,0 +1,75 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+data=pd.read_csv("dataSet/ogrenci.csv", sep=";")
+
+data=data[['G1','G2','G3','studytime','absences','age']]
+print(data)
+
+data.rename(columns={'G1':'not1',
+                     'G2':'not2',
+                     'G3':'final',
+                     'studytime':'calisma_suresi',
+                     'absences':'devamsizlik',
+                     'age':'yas'},
+            inplace=True)  #isimlerini değiştirdik
+print(data.head())  #ilk 5 gözlem
+print(data.tail())  #son 5 gözlem
+
+print(data.info())  #verilere ilişkin bilgi verir
+
+print(data.describe())  #özet istatistikleri verir
+
+plt.scatter(data.calisma_suresi, data.final)
+
+plt.xlabel("calisma süresi")
+plt.ylabel("final notu")
+plt.title("calisma süresi-final ilişkisi")
+plt.grid(True)
+plt.show()
+
+corr=data.corr()
+print(corr["calisma_suresi"].sort_values(ascending=False))  #korelasyon katsayılarını bulmak için
+
+#lineer denklemi oluşturmak için;
+from sklearn.linear_model import LinearRegression
+linear_reg = LinearRegression()
+
+x1=data.final.values.reshape(-1,1)
+y1=data.calisma_suresi.values.reshape(-1,1)
+print(linear_reg.fit(x1,y1))
+
+y1_ekseni_kesisim = np.array([0]).reshape(-1,1)
+b0=linear_reg.predict(y1_ekseni_kesisim)
+print("b0 kesim noktası:",b0)
+
+#eğim yani b1 bulmak için
+b1=linear_reg.coef_
+print("eğim:",b1)
+
+
+y = data["final"].values
+x = data.drop(["final"], axis=1)
+
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(x,y,test_size = 0.01, random_state =3)
+
+# Karar Ağacı eğitimi
+from sklearn.tree import DecisionTreeClassifier
+dt = DecisionTreeClassifier()
+clf=dt.fit(x_train, y_train)
+
+# Karar Ağacı testi
+print("Karar Ağacı Modeli Test Doğruluğu: {}".format(dt.score(x_test,y_test)))
+
+from sklearn.metrics import confusion_matrix  #tip1 tip2 hata grafiği çizimi için yükleme yaptık
+y_pred = dt.predict((x_test))
+alfa = confusion_matrix(y_test,y_pred)
+print(alfa)
+
+from sklearn import tree
+text_representation = tree.export_text(clf)
+print(text_representation)
+
+
